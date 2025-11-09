@@ -103,11 +103,11 @@ function pickerCallback(data) {
 async function pickDriveFolder() {
   await ensureAuth();
   loadPickerLib(() => {
+console.log("OAuth token being used:", gToken);
     const folderView = new google.picker.DocsView(google.picker.ViewId.FOLDERS)
       .setIncludeFolders(true)
       .setSelectFolderEnabled(true)
       .setLabel("Select Folder to Save In");
-
     const picker = new google.picker.PickerBuilder()
       .setOAuthToken(gToken)
       .setDeveloperKey(API_KEY)
