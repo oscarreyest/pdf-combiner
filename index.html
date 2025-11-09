@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PDF Combiner (Custom Filename)</title>
+<title>PDF Combiner (2–20 Files)</title>
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 <style>
   body {
@@ -13,7 +13,7 @@
     text-align: center;
     padding: 20px;
   }
-  input[type="file"], input[type="text"] {
+  select, input[type="file"], input[type="text"] {
     display: block;
     margin: 10px auto;
   }
@@ -36,16 +36,20 @@
     text-decoration: none;
     color: #1976d2;
   }
+  #fileInputs {
+    margin-top: 10px;
+  }
 </style>
 </head>
 <body>
-  <h2>Combine up to 4 PDFs</h2>
-  <p>Select 1–4 PDF files to merge:</p>
+  <h2>Combine Multiple PDFs</h2>
+  <p>Select how many PDFs you want to merge (2–20):</p>
 
-  <input type="file" id="pdf1" accept="application/pdf">
-  <input type="file" id="pdf2" accept="application/pdf">
-  <input type="file" id="pdf3" accept="application/pdf">
-  <input type="file" id="pdf4" accept="application/pdf">
+  <select id="fileCount">
+    <!-- Dynamically populate options -->
+  </select>
+
+  <div id="fileInputs"></div>
 
   <input type="text" id="filename" placeholder="Enter name for merged PDF (without .pdf)" />
 
@@ -53,6 +57,40 @@
   <a id="downloadLink" download="merged.pdf">⬇️ Download Merged PDF</a>
 
 <script>
+// Populate dropdown (2–20)
+const fileCountSelect = document.getElementById('fileCount');
+for (let i = 2; i <= 20; i++) {
+  const option = document.createElement('option');
+  option.value = i;
+  option.textContent = i;
+  fileCountSelect.appendChild(option);
+}
+fileCountSelect.value = 4; // Default
+
+// Generate initial file inputs
+generateFileInputs(4);
+
+fileCountSelect.addEventListener('change', () => {
+  const count = parseInt(fileCountSelect.value, 10);
+  generateFileInputs(count);
+});
+
+function generateFileInputs(count) {
+  const container = document.getElementById('fileInputs');
+  container.innerHTML = ''; // Clear old inputs
+  for (let i = 1; i <= count; i++) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/pdf';
+    input.id = `pdf${i}`;
+    input.style.display = 'block';
+    input.style.margin = '5px auto';
+    input.title = `Select PDF ${i}`;
+    container.appendChild(input);
+  }
+}
+
+// Merge PDFs
 async function mergePDFs(files) {
   const { PDFDocument } = PDFLib;
   const merged = await PDFDocument.create();
@@ -66,8 +104,11 @@ async function mergePDFs(files) {
 }
 
 document.getElementById('mergeBtn').addEventListener('click', async () => {
-  const inputs = [pdf1, pdf2, pdf3, pdf4].map(i => i.files[0]).filter(Boolean);
-  if (!inputs.length) return alert('Please select at least one PDF.');
+  const inputs = Array.from(document.querySelectorAll('#fileInputs input[type="file"]'))
+                      .map(i => i.files[0])
+                      .filter(Boolean);
+
+  if (inputs.length < 2) return alert('Please select at least two PDF files.');
 
   let name = document.getElementById('filename').value.trim();
   if (!name) return alert('Please enter a name for the merged PDF.');
