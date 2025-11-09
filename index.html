@@ -18,7 +18,7 @@
     margin: 10px auto;
   }
   button {
-    margin: 15px;
+    margin: 10px;
     padding: 10px 22px;
     background: #1976d2;
     color: white;
@@ -45,15 +45,15 @@
   <h2>Combine Multiple PDFs</h2>
   <p>Select how many PDFs you want to merge (2–20):</p>
 
-  <select id="fileCount">
-    <!-- Dynamically populate options -->
-  </select>
+  <select id="fileCount"></select>
 
   <div id="fileInputs"></div>
 
   <input type="text" id="filename" placeholder="Enter name for merged PDF (without .pdf)" />
 
   <button id="mergeBtn">Merge PDFs</button>
+  <button id="resetBtn" style="background:#9e9e9e;">Reset to create new merged PDF</button>
+
   <a id="downloadLink" download="merged.pdf">⬇️ Download Merged PDF</a>
 
 <script>
@@ -66,8 +66,6 @@ for (let i = 2; i <= 20; i++) {
   fileCountSelect.appendChild(option);
 }
 fileCountSelect.value = 4; // Default
-
-// Generate initial file inputs
 generateFileInputs(4);
 
 fileCountSelect.addEventListener('change', () => {
@@ -77,20 +75,19 @@ fileCountSelect.addEventListener('change', () => {
 
 function generateFileInputs(count) {
   const container = document.getElementById('fileInputs');
-  container.innerHTML = ''; // Clear old inputs
+  container.innerHTML = '';
   for (let i = 1; i <= count; i++) {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'application/pdf';
     input.id = `pdf${i}`;
+    input.title = `Select PDF ${i}`;
     input.style.display = 'block';
     input.style.margin = '5px auto';
-    input.title = `Select PDF ${i}`;
     container.appendChild(input);
   }
 }
 
-// Merge PDFs
 async function mergePDFs(files) {
   const { PDFDocument } = PDFLib;
   const merged = await PDFDocument.create();
@@ -107,7 +104,6 @@ document.getElementById('mergeBtn').addEventListener('click', async () => {
   const inputs = Array.from(document.querySelectorAll('#fileInputs input[type="file"]'))
                       .map(i => i.files[0])
                       .filter(Boolean);
-
   if (inputs.length < 2) return alert('Please select at least two PDF files.');
 
   let name = document.getElementById('filename').value.trim();
@@ -116,16 +112,22 @@ document.getElementById('mergeBtn').addEventListener('click', async () => {
 
   const blob = await mergePDFs(inputs);
   const url = URL.createObjectURL(blob);
-
-  // Open merged PDF in a new tab
   window.open(url, '_blank');
 
-  // Provide download link
   const link = document.getElementById('downloadLink');
   link.href = url;
   link.download = name;
   link.textContent = `⬇️ Download "${name}"`;
   link.style.display = 'inline-block';
+});
+
+// Reset functionality
+document.getElementById('resetBtn').addEventListener('click', () => {
+  document.getElementById('filename').value = '';
+  document.getElementById('downloadLink').style.display = 'none';
+  const count = parseInt(fileCountSelect.value, 10);
+  generateFileInputs(count);
+  alert('All selections have been cleared. Ready to create a new merged PDF.');
 });
 </script>
 </body>
