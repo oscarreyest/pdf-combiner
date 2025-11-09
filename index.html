@@ -29,8 +29,6 @@
   button:hover { background: #1565c0; }
   #resetBtn { background: #9e9e9e; }
   #resetBtn:hover { background: #757575; }
-  #saveAsBtn { background: #4caf50; }
-  #saveAsBtn:hover { background: #43a047; }
   a#downloadLink {
     display: none;
     margin-top: 10px;
@@ -60,8 +58,6 @@
   <button id="resetBtn">Reset</button>
 
   <a id="downloadLink" download="merged.pdf">⬇️ Download Merged PDF</a>
-  <button id="saveAsBtn" style="display:none;">Save As…</button>
-
   <div id="lastMerged"></div>
 
 <script>
@@ -122,24 +118,12 @@ document.getElementById('mergeBtn').addEventListener('click', async () => {
   const url = URL.createObjectURL(blob);
   window.open(url, '_blank');
 
-  // Update and show download link
   const link = document.getElementById('downloadLink');
   link.href = url;
   link.download = name;
   link.textContent = `⬇️ Download "${name}"`;
   link.style.display = 'inline-block';
 
-  // Show "Save As…" button
-  const saveAsBtn = document.getElementById('saveAsBtn');
-  saveAsBtn.style.display = 'inline-block';
-  saveAsBtn.onclick = () => {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = name;
-    a.click(); // triggers browser's "Save As…" dialog
-  };
-
-  // Update "Last merged file" label
   const lastMerged = document.getElementById('lastMerged');
   lastMerged.textContent = `🗂️ Last merged file: ${name}`;
   lastMerged.style.display = 'block';
@@ -149,7 +133,6 @@ document.getElementById('mergeBtn').addEventListener('click', async () => {
 document.getElementById('resetBtn').addEventListener('click', () => {
   document.getElementById('filename').value = '';
   document.getElementById('downloadLink').style.display = 'none';
-  document.getElementById('saveAsBtn').style.display = 'none';
   document.getElementById('lastMerged').style.display = 'none';
   fileCountSelect.value = 4;
   generateFileInputs(4);
