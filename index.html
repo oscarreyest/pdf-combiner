@@ -3,162 +3,56 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PDF Combiner + Google Drive Folder Upload (Fixed)</title>
+<title>PDF Combiner (Custom Filename)</title>
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-<script src="https://apis.google.com/js/api.js"></script>
 <style>
-  body{font-family:Arial,Helvetica,sans-serif;background:#fafafa;color:#333;text-align:center;padding:20px;}
-  input[type=file],input[type=text]{display:block;margin:10px auto;}
-  button{margin:10px;padding:10px 22px;background:#1976d2;color:#fff;border:none;border-radius:6px;cursor:pointer;}
-  button:hover{background:#1565c0;}
-  a#downloadLink{display:none;margin-top:10px;font-weight:bold;color:#1976d2;text-decoration:none;}
-  #folderName{font-weight:bold;color:#2e7d32;margin-top:8px;}
+  body {
+    font-family: Arial, sans-serif;
+    background: #fafafa;
+    color: #333;
+    text-align: center;
+    padding: 20px;
+  }
+  input[type="file"], input[type="text"] {
+    display: block;
+    margin: 10px auto;
+  }
+  button {
+    margin: 15px;
+    padding: 10px 22px;
+    background: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #1565c0;
+  }
+  a#downloadLink {
+    display: none;
+    margin-top: 10px;
+    font-weight: bold;
+    text-decoration: none;
+    color: #1976d2;
+  }
 </style>
 </head>
 <body>
-<h2>Combine up to 4 PDFs</h2>
-<p>Select from your device or Google Drive, then merge and save to a chosen Drive folder.</p>
+  <h2>Combine up to 4 PDFs</h2>
+  <p>Select 1–4 PDF files to merge:</p>
 
-<input type="file" id="pdf1" accept="application/pdf">
-<input type="file" id="pdf2" accept="application/pdf">
-<input type="file" id="pdf3" accept="application/pdf">
-<input type="file" id="pdf4" accept="application/pdf">
+  <input type="file" id="pdf1" accept="application/pdf">
+  <input type="file" id="pdf2" accept="application/pdf">
+  <input type="file" id="pdf3" accept="application/pdf">
+  <input type="file" id="pdf4" accept="application/pdf">
 
-<button id="pickBtn">📂 Select PDFs from Google Drive</button>
-<button id="folderBtn">🗂️ Select Drive Folder to Save</button>
-<div id="folderName"></div>
+  <input type="text" id="filename" placeholder="Enter name for merged PDF (without .pdf)" />
 
-<input type="text" id="filename" placeholder="Enter name for merged PDF (without .pdf)">
-<button id="mergeBtn">Merge PDFs</button>
-<a id="downloadLink" download="merged.pdf">⬇️ Download Merged PDF</a>
+  <button id="mergeBtn">Merge PDFs</button>
+  <a id="downloadLink" download="merged.pdf">⬇️ Download Merged PDF</a>
 
 <script>
-/* ===== Google API Config ===== */
-const CLIENT_ID = "700904948789-lagf13tv85kaaql313jgn87rub5rboeo.apps.googleusercontent.com";
-const API_KEY = "AIzaSyA8opHIVMj5matHgq5mzD3yQfB6dmahYlU";
-const SCOPES = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly";
-
-let pickedFiles = [];
-let selectedFolderId = null;
-let selectedFolderName = "";
-let gToken = null;
-
-/* ===== 1. Load Google API on Page Ready ===== */
-function initGoogleAPI() {
-  gapi.load("client:auth2", async () => {
-    await gapi.client.init({
-      apiKey: API_KEY,
-      clientId: CLIENT_ID,
-      scope: SCOPES,
-      discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"]
-    });
-    console.log("✅ Google API initialized");
-  });
-}
-window.onload = initGoogleAPI;
-
-/* ===== 2. Ensure Signed-In User ===== */
-async function ensureAuth() {
-  const auth = gapi.auth2.getAuthInstance();
-  if (!auth.isSignedIn.get()) {
-    await auth.signIn();
-  }
-  gToken = auth.currentUser.get().getAuthResponse().access_token;
-  return gToken;
-}
-
-/* ===== 3. Picker Loader ===== */
-function loadPickerLib(callback) {
-  gapi.load("picker", callback);
-}
-
-/* ===== 4. Pick PDFs from Drive ===== */
-async function pickDriveFiles() {
-  await ensureAuth();
-  loadPickerLib(() => {
-    const view = new google.picker.DocsView()
-      .setIncludeFolders(true)
-      .setSelectFolderEnabled(false)
-      .setMimeTypes("application/pdf")
-      .setLabel("Select up to 4 PDFs");
-
-    const picker = new google.picker.PickerBuilder()
-      .setOAuthToken(gToken)
-      .setDeveloperKey(API_KEY)
-      .addView(view)
-      .setCallback(pickerCallback)
-      .build();
-
-    picker.setVisible(true);
-  });
-}
-function pickerCallback(data) {
-  if (data.action === google.picker.Action.PICKED) {
-    pickedFiles = data.docs.slice(0, 4);
-    alert(`Selected ${pickedFiles.length} file(s) from Drive.`);
-  }
-}
-
-/* ===== 5. Select Folder ===== */
-async function pickDriveFolder() {
-  await ensureAuth();
-  loadPickerLib(() => {
-console.log("OAuth token being used:", gToken);
-    const folderView = new google.picker.DocsView(google.picker.ViewId.FOLDERS)
-      .setIncludeFolders(true)
-      .setSelectFolderEnabled(true)
-      .setLabel("Select Folder to Save In");
-    const picker = new google.picker.PickerBuilder()
-      .setOAuthToken(gToken)
-      .setDeveloperKey(API_KEY)
-      .addView(folderView)
-      .setCallback(folderCallback)
-      .build();
-
-    picker.setVisible(true);
-  });
-}
-function folderCallback(data) {
-  if (data.action === google.picker.Action.PICKED) {
-    const folder = data.docs[0];
-    selectedFolderId = folder.id;
-    selectedFolderName = folder.name;
-    document.getElementById("folderName").textContent =
-      "📁 Selected folder: " + selectedFolderName;
-  }
-}
-
-/* ===== 6. Fetch File Bytes ===== */
-async function getDriveFileContent(fileId) {
-  const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-    headers: { Authorization: "Bearer " + gToken }
-  });
-  return await res.arrayBuffer();
-}
-
-/* ===== 7. Upload to Drive ===== */
-async function uploadToDrive(blob, name) {
-  const metadata = { name: name, mimeType: "application/pdf" };
-  if (selectedFolderId) metadata.parents = [selectedFolderId];
-
-  const form = new FormData();
-  form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
-  form.append("file", blob);
-
-  const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
-    method: "POST",
-    headers: { Authorization: "Bearer " + gToken },
-    body: form
-  });
-
-  if (res.ok) {
-    alert(`✅ Merged PDF uploaded${selectedFolderName ? " to " + selectedFolderName : ""} successfully.`);
-  } else {
-    alert("⚠️ Upload failed.");
-  }
-}
-
-/* ===== 8. Merge PDFs ===== */
 async function mergePDFs(files) {
   const { PDFDocument } = PDFLib;
   const merged = await PDFDocument.create();
@@ -168,40 +62,29 @@ async function mergePDFs(files) {
     const pages = await merged.copyPages(pdf, pdf.getPageIndices());
     pages.forEach(p => merged.addPage(p));
   }
-  return new Blob([await merged.save()], { type: "application/pdf" });
+  return new Blob([await merged.save()], { type: 'application/pdf' });
 }
 
-/* ===== 9. Button Listeners ===== */
-document.getElementById("pickBtn").addEventListener("click", pickDriveFiles);
-document.getElementById("folderBtn").addEventListener("click", pickDriveFolder);
-
-document.getElementById("mergeBtn").addEventListener("click", async () => {
+document.getElementById('mergeBtn').addEventListener('click', async () => {
   const inputs = [pdf1, pdf2, pdf3, pdf4].map(i => i.files[0]).filter(Boolean);
-  const driveFiles = [];
+  if (!inputs.length) return alert('Please select at least one PDF.');
 
-  for (const doc of pickedFiles) {
-    const buf = await getDriveFileContent(doc.id);
-    driveFiles.push(new File([buf], doc.name, { type: "application/pdf" }));
-  }
+  let name = document.getElementById('filename').value.trim();
+  if (!name) return alert('Please enter a name for the merged PDF.');
+  if (!name.toLowerCase().endsWith('.pdf')) name += '.pdf';
 
-  const allFiles = inputs.concat(driveFiles);
-  if (!allFiles.length) return alert("Please select at least one PDF.");
-
-  let name = document.getElementById("filename").value.trim();
-  if (!name) return alert("Please enter a name for the merged PDF.");
-  if (!name.toLowerCase().endsWith(".pdf")) name += ".pdf";
-
-  const blob = await mergePDFs(allFiles);
+  const blob = await mergePDFs(inputs);
   const url = URL.createObjectURL(blob);
-  window.open(url, "_blank");
 
-  const link = document.getElementById("downloadLink");
+  // Open merged PDF in a new tab
+  window.open(url, '_blank');
+
+  // Provide download link
+  const link = document.getElementById('downloadLink');
   link.href = url;
   link.download = name;
   link.textContent = `⬇️ Download "${name}"`;
-  link.style.display = "inline-block";
-
-  if (confirm("Upload merged file to Google Drive?")) await uploadToDrive(blob, name);
+  link.style.display = 'inline-block';
 });
 </script>
 </body>
