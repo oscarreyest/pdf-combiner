@@ -42,6 +42,12 @@
     text-decoration: none;
     color: #1976d2;
   }
+  #lastMerged {
+    display: none;
+    margin-top: 8px;
+    color: #555;
+    font-size: 15px;
+  }
   #fileInputs {
     margin-top: 10px;
   }
@@ -61,6 +67,7 @@
   <button id="resetBtn">Reset</button>
 
   <a id="downloadLink" download="merged.pdf">⬇️ Download Merged PDF</a>
+  <div id="lastMerged"></div>
 
 <script>
 // Populate dropdown (2–20)
@@ -125,12 +132,17 @@ document.getElementById('mergeBtn').addEventListener('click', async () => {
   link.download = name;
   link.textContent = `⬇️ Download "${name}"`;
   link.style.display = 'inline-block';
+
+  const lastMerged = document.getElementById('lastMerged');
+  lastMerged.textContent = `🗂️ Last merged file: ${name}`;
+  lastMerged.style.display = 'block';
 });
 
 // Reset button — always returns to 4 inputs
 document.getElementById('resetBtn').addEventListener('click', () => {
   document.getElementById('filename').value = '';
   document.getElementById('downloadLink').style.display = 'none';
+  document.getElementById('lastMerged').style.display = 'none';
   fileCountSelect.value = 4;
   generateFileInputs(4);
   window.scrollTo({ top: 0, behavior: 'smooth' });
