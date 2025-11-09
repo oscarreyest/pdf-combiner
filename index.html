@@ -29,6 +29,12 @@
   button:hover {
     background: #1565c0;
   }
+  #resetBtn {
+    background: #9e9e9e;
+  }
+  #resetBtn:hover {
+    background: #757575;
+  }
   a#downloadLink {
     display: none;
     margin-top: 10px;
@@ -52,7 +58,7 @@
   <input type="text" id="filename" placeholder="Enter name for merged PDF (without .pdf)" />
 
   <button id="mergeBtn">Merge PDFs</button>
-  <button id="resetBtn" style="background:#9e9e9e;">Reset to create new merged PDF</button>
+  <button id="resetBtn">Reset</button>
 
   <a id="downloadLink" download="merged.pdf">⬇️ Download Merged PDF</a>
 
@@ -74,61 +80,4 @@ fileCountSelect.addEventListener('change', () => {
 });
 
 function generateFileInputs(count) {
-  const container = document.getElementById('fileInputs');
-  container.innerHTML = '';
-  for (let i = 1; i <= count; i++) {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/pdf';
-    input.id = `pdf${i}`;
-    input.title = `Select PDF ${i}`;
-    input.style.display = 'block';
-    input.style.margin = '5px auto';
-    container.appendChild(input);
-  }
-}
-
-async function mergePDFs(files) {
-  const { PDFDocument } = PDFLib;
-  const merged = await PDFDocument.create();
-  for (const file of files) {
-    const bytes = await file.arrayBuffer();
-    const pdf = await PDFDocument.load(bytes);
-    const pages = await merged.copyPages(pdf, pdf.getPageIndices());
-    pages.forEach(p => merged.addPage(p));
-  }
-  return new Blob([await merged.save()], { type: 'application/pdf' });
-}
-
-document.getElementById('mergeBtn').addEventListener('click', async () => {
-  const inputs = Array.from(document.querySelectorAll('#fileInputs input[type="file"]'))
-                      .map(i => i.files[0])
-                      .filter(Boolean);
-  if (inputs.length < 2) return alert('Please select at least two PDF files.');
-
-  let name = document.getElementById('filename').value.trim();
-  if (!name) return alert('Please enter a name for the merged PDF.');
-  if (!name.toLowerCase().endsWith('.pdf')) name += '.pdf';
-
-  const blob = await mergePDFs(inputs);
-  const url = URL.createObjectURL(blob);
-  window.open(url, '_blank');
-
-  const link = document.getElementById('downloadLink');
-  link.href = url;
-  link.download = name;
-  link.textContent = `⬇️ Download "${name}"`;
-  link.style.display = 'inline-block';
-});
-
-// Reset functionality
-document.getElementById('resetBtn').addEventListener('click', () => {
-  document.getElementById('filename').value = '';
-  document.getElementById('downloadLink').style.display = 'none';
-  const count = parseInt(fileCountSelect.value, 10);
-  generateFileInputs(count);
-  alert('All selections have been cleared. Ready to create a new merged PDF.');
-});
-</script>
-</body>
-</html>
+  const container = document.getElementById('fileInp
